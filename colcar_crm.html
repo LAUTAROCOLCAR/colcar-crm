@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COLCAR CRM — Mercedes-Benz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6f9;color:#1a1a2e;min-height:100vh;}
+.topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-dot{width:32px;height:32px;background:#00ADEF;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;}
+.logo-text{font-size:15px;font-weight:600;color:#1a1a2e;}
+.logo-sub{font-size:12px;color:#6b7280;margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.sync-info{font-size:12px;color:#6b7280;}
+.btn{padding:7px 14px;border-radius:7px;border:1px solid #e5e7eb;background:#fff;font-size:13px;cursor:pointer;color:#374151;font-weight:500;transition:all 0.15s;}
+.btn:hover{background:#f9fafb;border-color:#d1d5db;}
+.btn-primary{background:#00ADEF;border-color:#00ADEF;color:#fff;}
+.btn-primary:hover{background:#0099d4;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.container{max-width:1200px;margin:0 auto;padding:24px;}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.metric{background:#fff;border-radius:10px;padding:16px 20px;border:1px solid #e5e7eb;}
+.metric-label{font-size:12px;color:#6b7280;margin-bottom:6px;font-weight:500;}
+.metric-value{font-size:26px;font-weight:600;color:#1a1a2e;}
+.metric-value.alert{color:#ef4444;}
+.metric-value.info{color:#00ADEF;}
+.tabs{display:flex;gap:2px;margin-bottom:20px;background:#fff;border-radius:10px;padding:4px;border:1px solid #e5e7eb;width:fit-content;}
+.tab{padding:7px 18px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#6b7280;transition:all 0.15s;}
+.tab.active{background:#00ADEF;color:#fff;}
+.panel{display:none;}
+.panel.active{display:block;}
+.card{background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:20px;}
+.section-label{font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;}
+.alert-item{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:box-shadow 0.15s;}
+.alert-item:hover{box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+.alert-item.urgent{border-left:3px solid #ef4444;}
+.alert-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dot-bday{background:#f59e0b;}
+.dot-m6{background:#00ADEF;}
+.dot-y1{background:#10b981;}
+.dot-y2{background:#8b5cf6;}
+.alert-body{flex:1;}
+.alert-name{font-size:14px;font-weight:600;color:#1a1a2e;}
+.alert-meta{font-size:12px;color:#6b7280;margin-top:3px;}
+.alert-right{text-align:right;flex-shrink:0;}
+.alert-date{font-size:12px;font-weight:600;color:#374151;}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;margin-left:6px;}
+.badge-bday{background:#fef3c7;color:#92400e;}
+.badge-m6{background:#dbeafe;color:#1e40af;}
+.badge-y1{background:#d1fae5;color:#065f46;}
+.badge-y2{background:#ede9fe;color:#4c1d95;}
+.badge-hoy{background:#fee2e2;color:#991b1b;}
+.empty-state{text-align:center;padding:40px;color:#9ca3af;font-size:14px;}
+.search-row{display:flex;gap:10px;margin-bottom:16px;}
+.search-row input,.search-row select{padding:8px 12px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;color:#374151;background:#fff;}
+.search-row input{flex:1;}
+.search-row input:focus,.search-row select:focus{outline:none;border-color:#00ADEF;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:10px 12px;font-weight:600;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #f3f4f6;}
+td{padding:11px 12px;border-bottom:1px solid #f9fafb;color:#374151;max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+tr:hover td{background:#f9fafb;}
+.vpill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;}
+.vl{background:#dbeafe;color:#1e40af;}
+.vg{background:#d1fae5;color:#065f46;}
+.vj{background:#ede9fe;color:#4c1d95;}
+.prox-alert{color:#00ADEF;font-weight:600;}
+.upload-zone{border:2px dashed #d1d5db;border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all 0.15s;margin-bottom:20px;}
+.upload-zone:hover{border-color:#00ADEF;background:#f0fbff;}
+.upload-zone input{display:none;}
+.upload-icon{width:48px;height:48px;background:#e0f5ff;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;}
+.upload-title{font-size:15px;font-weight:600;color:#1a1a2e;margin-bottom:4px;}
+.upload-sub{font-size:13px;color:#6b7280;}
+.progress-wrap{background:#f3f4f6;border-radius:10px;padding:16px;margin-bottom:16px;display:none;}
+.progress-text{font-size:13px;color:#374151;margin-bottom:8px;}
+.progress-bar{height:6px;background:#e5e7eb;border-radius:6px;overflow:hidden;}
+.progress-fill{height:100%;background:#00ADEF;width:0%;transition:width 0.3s;border-radius:6px;}
+.config-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.config-row label{font-size:13px;color:#6b7280;min-width:140px;}
+.config-row input{flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;}
+.config-section{background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:20px;margin-bottom:16px;}
+.config-title{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:14px;}
+.chk-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:14px;cursor:pointer;}
+.status-msg{font-size:12px;padding:8px 12px;border-radius:7px;margin-bottom:16px;}
+.status-ok{background:#d1fae5;color:#065f46;}
+.status-err{background:#fee2e2;color:#991b1b;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+.modal-field{margin-bottom:12px;}
+.modal-field label{display:block;font-size:12px;color:#6b7280;margin-bottom:4px;font-weight:500;}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+@media(max-width:600px){.metrics{grid-template-columns:repeat(2,1fr);}.search-row{flex-wrap:wrap;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-dot">MB</div>
+    <div>
+      <div class="logo-text">COLCAR CRM</div>
+      <div class="logo-sub">Mercedes-Benz — Moreno</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="sync-info" id="syncInfo">Cargando...</span>
+    <label class="btn btn-sm" style="cursor:pointer;">
+      + Subir PDFs
+      <input type="file" id="pdfInput" accept=".pdf" multiple onchange="onPDFUpload(this.files)">
+    </label>
+    <button class="btn btn-sm btn-primary" onclick="openAddModal()">+ Agregar cliente</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Total clientes</div><div class="metric-value" id="mTotal">—</div></div>
+    <div class="metric"><div class="metric-label">Alertas hoy</div><div class="metric-value alert" id="mHoy">—</div></div>
+    <div class="metric"><div class="metric-label">Esta semana</div><div class="metric-value info" id="mSemana">—</div></div>
+    <div class="metric"><div class="metric-label">Este mes</div><div class="metric-value" id="mMes">—</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('alertas',this)">Alertas</button>
+    <button class="tab" onclick="showTab('clientes',this)">Clientes</button>
+    <button class="tab" onclick="showTab('config',this)">Configuracion</button>
+  </div>
+
+  <!-- ALERTAS -->
+  <div id="tab-alertas" class="panel active">
+    <div style="margin-bottom:20px;">
+      <div class="section-label">Hoy</div>
+      <div id="al-hoy"></div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div class="section-label">Esta semana</div>
+      <div id="al-semana"></div>
+    </div>
+    <div>
+      <div class="section-label">Este mes</div>
+      <div id="al-mes"></div>
+    </div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div id="tab-clientes" class="panel">
+    <div class="search-row">
+      <input type="text" id="searchQ" placeholder="Buscar por nombre, modelo, vendedor..." oninput="renderClientes()">
+      <select id="filterV" onchange="renderClientes()">
+        <option value="">Todos los vendedores</option>
+        <option>Lautaro Giambrone</option>
+        <option>Gabriela Ventinelli</option>
+        <option>Juan I. Castro</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:60px;">Venta</th>
+            <th style="width:95px;">Fecha</th>
+            <th style="width:200px;">Cliente</th>
+            <th style="width:130px;">Modelo</th>
+            <th style="width:100px;">Precio</th>
+            <th style="width:100px;">Vendedor</th>
+            <th style="width:75px;">Cumple</th>
+            <th style="width:120px;">Prox. alerta</th>
+            <th style="width:60px;"></th>
+          </tr>
+        </thead>
+        <tbody id="clientesTbody"></tbody>
+      </table>
+      <div id="clientesEmpty" class="empty-state" style="display:none;">Sin resultados.</div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="tab-config" class="panel">
+    <div class="config-section">
+      <div class="config-title">Email de alertas</div>
+      <div class="config-row">
+        <label>Direccion de email</label>
+        <input type="email" id="cfgEmail" value="lgiambrone@colcarmerbus.com.ar">
+        <button class="btn btn-primary btn-sm" onclick="saveConfig()">Guardar</button>
+      </div>
+      <div id="cfgStatus"></div>
+    </div>
+    <div class="config-section">
+      <div class="config-title">Tipos de alerta activos</div>
+      <label class="chk-row"><input type="checkbox" id="chkBday" checked> <span class="badge badge-bday">Cumpleanos</span> Saludar al cliente el dia de su cumpleanos</label>
+      <label class="chk-row"><input type="checkbox" id="chkM6" checked> <span class="badge badge-m6">6 meses</span> Seguimiento post-venta a los 6 meses</label>
+      <label class="chk-row"><input type="checkbox" id="chkY1" checked> <span class="badge badge-y1">1 ano</span> Primer aniversario de la compra</label>
+      <label class="chk-row"><input type="checkbox" id="chkY2" checked> <span class="badge badge-y2">2 anos</span> Renovacion potencial a los 2 anos</label>
+    </div>
+    <div class="config-section">
+      <div class="config-title">Datos</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" onclick="exportCSV()">Exportar CSV</button>
+        <button class="btn" onclick="document.getElementById('importInput').click()">Importar CSV</button>
+        <input type="file" id="importInput" accept=".csv" style="display:none" onchange="importCSV(this)">
+        <button class="btn" style="color:#ef4444;border-color:#fca5a5;" onclick="confirmClear()">Borrar todos los datos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGREGAR/EDITAR -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Agregar cliente</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="modal-field"><label>N° Venta</label><input id="mVenta" type="text"></div>
+      <div class="modal-field"><label>Fecha venta</label><input id="mFecha" type="text" placeholder="DD/MM/AAAA"></div>
+      <div class="modal-field" style="grid-column:1/-1"><label>Nombre / Razon social</label><input id="mCliente" type="text"></div>
+      <div class="modal-field"><label>Celular</label><input id="mCel" type="text"></div>
+      <div class="modal-field"><label>Email</label><input id="mEmail" type="text"></div>
+      <div class="modal-field"><label>Fecha de nacimiento</label><input id="mFnac" type="text" placeholder="DD/MM/AAAA"></div>
+      <div class="modal-field"><label>Modelo</label><input id="mModelo" type="text"></div>
+      <div class="modal-field"><label>Version</label><input id="mVersion" type="text"></div>
+      <div class="modal-field"><label>Precio</label><input id="mPrecio" type="text"></div>
+      <div class="modal-field"><label>Moneda</label>
+        <select id="mMoneda"><option>USD</option><option>ARS</option></select>
+      </div>
+      <div class="modal-field"><label>Vendedor</label>
+        <select id="mVendedor">
+          <option>Lautaro Giambrone</option>
+          <option>Gabriela Ventinelli</option>
+          <option>Juan I. Castro</option>
+        </select>
+      </div>
+      <div class="modal-field"><label>Forma de pago</label><input id="mPago" type="text"></div>
+      <div class="modal-field" style="grid-column:1/-1"><label>Observaciones</label><input id="mObs" type="text"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCliente()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB_KEY = 'colcar_crm_v3';
+const CFG_KEY = 'colcar_cfg_v1';
+
+const INIT_DATA = [
+["17721","26/12/2025","PRO SBN SRL","","","","GLC","GLC 300 Off-Road","","92000","USD","Contado","Lautaro Giambrone","","","Empresa. Patenta feb 2026."],
+["17752","05/01/2026","Fernando Ariel Allega","","","","GLC","GLC 300 Coupe","","52000","USD","Contado + Toma","Juan I. Castro","","","Toma ML 350 2013. Santa Fe."],
+["17766","06/01/2026","Jorge Alfredo Gutnisky","","","","GLC","GLC 300","","89000","USD","Contado + Toma","Lautaro Giambrone","","","Toma Audi A1 2022 + Audi A3 2018. Corrientes."],
+["17778","07/01/2026","Maria Alejandra Dubovik","","","","GLA","GLA 200","","61000","USD","Contado + Toma","Juan I. Castro","","","Toma MB A200 2017. Tigre."],
+["17800","13/01/2026","RULO CAR SA","1141460493","rulocar@gmail.com","","MB C200 Avantgarde","Avantgarde","","33000000","ARS","Contado","Lautaro Giambrone","","","Empresa. Quilmes."],
+["17811","14/01/2026","TRAYECTO NORTE SRL","1166298777","ELOPEZ@ESALOGISTICA.COM.AR","","MB A35","Hatch","","67500","USD","Contado","Gabriela Ventinelli","","","Empresa. Fontana, Chaco."],
+["17819","14/01/2026","Gonzalo Patricio Telesio","","","","C","C 300","","70000000","ARS","Contado + Toma","Juan I. Castro","","","Toma CLA 200 Coupe 2018. Financiado $4M/12c 36%."],
+["17823","14/01/2026","Cynthia Alba Suarez","","","","CLA","CLA 200","","55000","USD","Contado","Juan I. Castro","","","Temperley."],
+["17829","15/01/2026","Ignacio Martin Baldoni","","","","Clase A","A","","47000","USD","Contado","Lautaro Giambrone","","",""],
+["17847","19/01/2026","FIDEICOMISO PROTECNET","2604039466","DANILO.PATRUNO@ISELIN.COM.AR","","GLA","GLA 250 AMG-Line","Blanco","69000","USD","Contado","Lautaro Giambrone","","","Fideicomiso. San Rafael, Mendoza."],
+["17848","19/01/2026","Jose Santoro","","","25/03/1944","Clase C","C 300","","66000","USD","Contado","Gabriela Ventinelli","25/03","19/01/2027",""],
+["17850","19/01/2026","Juan Jose Negri Rubino","","","","CLA","CLA 200","","0","USD","Venta directa","Lautaro Giambrone","","","Comision u$s3000."],
+["17852","19/01/2026","Centro Medico del Plata SRL","","","","Clase A","A","","84700000","ARS","Contado","Lautaro Giambrone","","","Empresa."],
+["17854","20/01/2026","Carlos Mauricio Grebin","","","","GLB","GLB 250","","54000","USD","Contado","Gabriela Ventinelli","","","Moron."],
+["17865","21/01/2026","DOMAPA SA","","","","GLA","GLA 250 AMG","","70000","USD","Contado","Juan I. Castro","","","Empresa."],
+["17871","22/01/2026","Diego Simon Pomerane","1144474847","DPOMERANE@GMAIL.COM","23/12/1958","GLA","GLA 250 AMG-Line","Gris Montana","68000","USD","Contado","Gabriela Ventinelli","23/12","22/01/2027","Abona antes 15/02/26."],
+["17873","22/01/2026","Horacio Carlos Cremona","","","","GLC","GLC 300","","49200000","ARS","Contado + Toma","Lautaro Giambrone","","","Toma GLK 300 2013. Ayacucho. MIPYME."],
+["17875","23/01/2026","Gustavo Alberto Ponte","1141875419","ARGGAP@HOTMAIL.COM","01/08/1981","Jeep Renegade","Longitude","","25000","USD","Contado","Juan I. Castro","01/08","23/01/2027","Usado. CABA."],
+["17876","23/01/2026","Ricardo Julio Backer","1144471734","RICARDOBACKER@GMAIL.COM","08/08/1945","GLC","GLC 300 Off-Road","Gris Plata","105000","USD","Contado + Toma","Gabriela Ventinelli","08/08","23/01/2027","Toma GLC300 Urban 2017. u$s75k+toma u$s30k."],
+["17877","23/01/2026","Estancia Miraflores SA","","","","GLC","GLC 300","","33000","USD","Contado + Toma","Lautaro Giambrone","","","Toma Jeep Compass 2018. Empresa."],
+["17881","23/01/2026","German Pablo Luengo","1158003444","GPL@LIVE.COM.AR","09/11/1968","CLA","CLA 200 Progressive","Gris Plata","55000","USD","Contado","Juan I. Castro","09/11","23/01/2027","Castelar."],
+["17886","26/01/2026","Leandro Emilio Molina","","","","Clase A","A","","47000","USD","Contado","Lautaro Giambrone","","",""],
+["17894","27/01/2026","Juan Bautista Reynes","","","","Clase C","C 300","","76000","USD","Contado","Gabriela Ventinelli","","","San Pedro. Empresa Mercadoventa Norte."],
+["17902","28/01/2026","Ricardo Amicone","","","09/07/1951","Clase A","A","","70300000","ARS","Contado","Gabriela Ventinelli","09/07","28/01/2027",""],
+["17903","28/01/2026","Brenda Marina Zozaya","","","","Clase A","A","","47000","USD","Contado","Juan I. Castro","","",""],
+["17908","29/01/2026","Maria del Carmen Losada Blanco","","","","GLA","GLA 250 AMG","","74000","USD","Contado + Toma","Juan I. Castro","","","Fact. 80/20 con Rodrigo Vallejos. Toma C300 2025."],
+["17910","29/01/2026","Pablo Gaston Jafelle Fraga","","","","Clase A","A","","47000","USD","Contado","Juan I. Castro","","",""],
+["17914","30/01/2026","Agustin Pacheco","","","","GLA","GLA 200","","24500","USD","Contado + cuotas","Lautaro Giambrone","","","u$s14500 + u$s10000/6 cuotas sin prenda."],
+["17920","02/02/2026","Kevin Valentin Granelli","","","04/06/1998","Audi A3","A3","","26500","USD","Contado","Gabriela Ventinelli","04/06","02/02/2027",""],
+["17926","03/02/2026","Gustavo Eduardo Paz","","","","GLC","GLC 43 AMG","","90000","USD","Contado + Toma","Lautaro Giambrone","","","Op 80/20 con Jentilezza. Toma GLE 400 2018."],
+["17953","06/02/2026","Banco Galicia (Miriam Vicente)","","","","GLA","GLA 200","","93000000","ARS","Leasing","Gabriela Ventinelli","","","Leasing."],
+["17954","09/02/2026","Marcelo Bartolome Sanchez Velazquez","","","","Clase A","A","","47000","USD","Contado","Lautaro Giambrone","","",""],
+["17955","09/02/2026","Ignacio Martin Huth","","","","Audi A1","A1","","27000","USD","Contado","Juan I. Castro","","",""],
+["17957","09/02/2026","Jorge Schamne","","","07/12/1966","GLA","GLA 250 AMG","","70000","USD","Contado","Juan I. Castro","07/12","09/02/2027",""],
+["17965","10/02/2026","Ernesto Oscar Fondati","","","","Clase C","C 250","","20000","USD","Contado","Juan I. Castro","","",""],
+["17966","10/02/2026","Paula del Sol Caruso","","","25/10/1997","MB Viano","Viano","","27500","USD","Contado","Juan I. Castro","25/10","10/02/2027",""],
+["17973","12/02/2026","Aldana Irupe Lopez Uthurralt","","","","Clase A","A","","66700000","ARS","Contado","Gabriela Ventinelli","","","Unidad abonada."],
+["17977","12/02/2026","Sonia Elizabeth Perez","","","","Clase A","A","","66700000","ARS","Contado","Juan I. Castro","","",""],
+["17986","13/02/2026","Enrique Saravi O Keefe","","","","GLC","GLC 43 AMG","","152000","USD","Contado + cuotas","Gabriela Ventinelli","","","La Plata. u$s75k + u$s77k/10 cuotas con prenda."],
+["18009","19/02/2026","Hugo Lopez Castellano","","","","GLB","GLB 250","","87000000","ARS","Toma","Lautaro Giambrone","","","Solo toma GLB 250 2026."],
+["18017","20/02/2026","Rolando Jesus Palacios","","","","Clase A","A","","47500","USD","Contado","Gabriela Ventinelli","","",""],
+["18020","22/02/2026","Fernando Quiroga Lafargue","","","","Clase A","A","","47900","USD","Contado","Gabriela Ventinelli","","",""],
+["18027","23/02/2026","Marcela Sanchez","","","","Clase C","C 300","","68000","USD","Contado + Toma","Juan I. Castro","","","Toma GLA 200 2019."],
+["18033","24/02/2026","Oscar Horacio Suarez","","","18/03/1954","CLA","CLA 200","","55000","USD","Contado","Juan I. Castro","18/03","24/02/2027",""],
+["18037","24/02/2026","Marcelo Ricardo Romeo","","","","Clase C","C 300","","65000","USD","Contado","Gabriela Ventinelli","","",""],
+["18039","24/02/2026","Mauro Moreno","","","","GLA","GLA 200","","58000","USD","Contado","Lautaro Giambrone","","",""],
+["18043","25/02/2026","Juan Alberto Alaniz","","","","MB ML","ML 350","","34000","USD","Contado","Lautaro Giambrone","","","Puerto Deseado, Santa Cruz."],
+["18045","25/02/2026","Guillermo Alejandro Vera","","","","Clase A","A","","47800","USD","Contado","Gabriela Ventinelli","","",""],
+["18057","26/02/2026","Javier Alberto Fernandez","","","","Clase A","A 250 AMG","","60500","USD","Contado","Lautaro Giambrone","","","Cordoba."],
+["18062","27/02/2026","Empresa Rio Uruguay SRL","","","","GLB","GLB 250","","68000","USD","Contado + Toma","Lautaro Giambrone","","","Toma GLB 200 2022. Posadas, Misiones."],
+["18063","27/02/2026","Empresa Rio Uruguay SRL","","","","GLE","GLE 450 AMG","","180000","USD","Contado + Toma","Lautaro Giambrone","","","Toma GLE 450 2023. Posadas, Misiones."],
+["18066","27/02/2026","Guido Damian Giannone","","","","Clase A","A200","","22500","USD","Contado","Juan I. Castro","","",""],
+["18090","03/03/2026","Ramiro Alberto Vargas","","","","CLA","CLA 200","","55000","USD","Contado","Gabriela Ventinelli","","",""],
+["18104","04/03/2026","Mauricio Rigal","","","","GLB","GLB 250","","66000","USD","Contado","Lautaro Giambrone","","",""],
+["18108","05/03/2026","Sandra Elizabeth Benitez","","","","GLC","GLC 300 Off-Road","","105000","USD","Contado","Lautaro Giambrone","","",""],
+["18114","06/03/2026","Maria Dolores Loza","3537595659","ESCRIDOLORES@GMAIL.COM","22/03/1926","GLA","GLA 250 AMG-Line","Blanco","68000","USD","Contado","Gabriela Ventinelli","22/03","06/03/2027","Bell Ville, Cordoba."]
+];
+
+function rowToObj(r){return{venta:r[0]||'',fecha:r[1]||'',cliente:r[2]||'',cel:r[3]||'',email:r[4]||'',fnac:r[5]||'',modelo:r[6]||'',version:r[7]||'',color:r[8]||'',precio:r[9]||'',moneda:r[10]||'',pago:r[11]||'',vendedor:r[12]||'',recCumple:r[13]||'',recCambio:r[14]||'',obs:r[15]||''};}
+function objToRow(o){return[o.venta,o.fecha,o.cliente,o.cel,o.email,o.fnac,o.modelo,o.version,o.color,o.precio,o.moneda,o.pago,o.vendedor,o.recCumple,o.recCambio,o.obs];}
+
+let clientes=[];
+let cfg={email:'lgiambrone@colcarmerbus.com.ar'};
+let editIdx=-1;
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem(DB_KEY);
+    clientes=raw?JSON.parse(raw):INIT_DATA.map(rowToObj);
+    if(!raw)saveData();
+    const rawCfg=localStorage.getItem(CFG_KEY);
+    if(rawCfg)cfg=JSON.parse(rawCfg);
+    document.getElementById('cfgEmail').value=cfg.email||'';
+  }catch(e){clientes=INIT_DATA.map(rowToObj);saveData();}
+}
+
+function saveData(){
+  localStorage.setItem(DB_KEY,JSON.stringify(clientes));
+  document.getElementById('syncInfo').textContent='Guardado: '+new Date().toLocaleTimeString('es-AR');
+}
+
+function parseFecha(s){if(!s)return null;const p=s.split('/');if(p.length!==3)return null;return new Date(+p[2],+p[1]-1,+p[0]);}
+function fmtFecha(d){if(!d)return'';return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function diasHasta(d,hoy){const t=new Date(d);t.setHours(0,0,0,0);const h=new Date(hoy);h.setHours(0,0,0,0);return Math.round((t-h)/86400000);}
+function proxCumple(fnac,hoy){if(!fnac)return null;const f=parseFecha(fnac);if(!f)return null;const c=new Date(hoy.getFullYear(),f.getMonth(),f.getDate());if(c<hoy)c.setFullYear(c.getFullYear()+1);return c;}
+
+function calcAlertas(){
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const al=[];
+  clientes.forEach((c,idx)=>{
+    const fv=parseFecha(c.fecha);if(!fv)return;
+    const cp=proxCumple(c.fnac,hoy);
+    if(cp){const d=diasHasta(cp,hoy);if(d>=0&&d<=30)al.push({tipo:'bday',c,idx,fecha:cp,dias:d,lbl:'Cumpleanos'});}
+    const checks=[
+      {tipo:'m6',lbl:'Seguimiento 6 meses',d:new Date(fv)},
+      {tipo:'y1',lbl:'1 ano de la compra',d:new Date(fv)},
+      {tipo:'y2',lbl:'2 anos - Renovacion',d:new Date(fv)},
+    ];
+    checks[0].d.setMonth(checks[0].d.getMonth()+6);
+    checks[1].d.setFullYear(checks[1].d.getFullYear()+1);
+    checks[2].d.setFullYear(checks[2].d.getFullYear()+2);
+    checks.forEach(ck=>{const d=diasHasta(ck.d,hoy);if(d>=-3&&d<=30)al.push({tipo:ck.tipo,c,idx,fecha:ck.d,dias:d,lbl:ck.lbl});});
+  });
+  return al.sort((a,b)=>a.dias-b.dias);
+}
+
+function badgeHTML(tipo){
+  const map={bday:['badge-bday','Cumpleanos'],m6:['badge-m6','6 meses'],y1:['badge-y1','1 ano'],y2:['badge-y2','2 anos']};
+  const[cls,txt]=map[tipo];return`<span class="badge ${cls}">${txt}</span>`;
+}
+
+function renderAlertas(){
+  const al=calcAlertas();
+  const hoy=al.filter(a=>a.dias===0);
+  const sem=al.filter(a=>a.dias>0&&a.dias<=7);
+  const mes=al.filter(a=>a.dias>7&&a.dias<=30);
+  document.getElementById('mHoy').textContent=hoy.length;
+  document.getElementById('mSemana').textContent=sem.length;
+  document.getElementById('mMes').textContent=mes.length;
+  const render=arr=>{
+    if(!arr.length)return'<div class="empty-state">Sin alertas en este periodo.</div>';
+    return arr.map(a=>`
+      <div class="alert-item${a.dias===0?' urgent':''}">
+        <div class="alert-dot dot-${a.tipo}"></div>
+        <div class="alert-body">
+          <div class="alert-name">${a.c.cliente}${badgeHTML(a.tipo)}${a.dias===0?'<span class="badge badge-hoy">Hoy</span>':''}</div>
+          <div class="alert-meta">${a.c.modelo} ${a.c.version} &mdash; ${a.c.vendedor}${a.c.cel?` &mdash; ${a.c.cel}`:''}</div>
+        </div>
+        <div class="alert-right">
+          <div class="alert-date">${a.dias===0?'Hoy':a.dias===1?'Manana':fmtFecha(a.fecha)}</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:2px;">${a.lbl}</div>
+        </div>
+      </div>`).join('');
+  };
+  document.getElementById('al-hoy').innerHTML=render(hoy);
+  document.getElementById('al-semana').innerHTML=render(sem);
+  document.getElementById('al-mes').innerHTML=render(mes);
+}
+
+function renderClientes(){
+  const q=(document.getElementById('searchQ').value||'').toLowerCase();
+  const v=(document.getElementById('filterV').value||'').toLowerCase();
+  const fil=clientes.filter((c,i)=>{
+    const mq=!q||c.cliente.toLowerCase().includes(q)||c.modelo.toLowerCase().includes(q)||c.vendedor.toLowerCase().includes(q)||c.venta.includes(q);
+    const mv=!v||c.vendedor.toLowerCase().includes(v);
+    return mq&&mv;
+  });
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const vcls={'Lautaro Giambrone':'vl','Gabriela Ventinelli':'vg','Juan I. Castro':'vj'};
+  document.getElementById('clientesEmpty').style.display=fil.length?'none':'block';
+  document.getElementById('clientesTbody').innerHTML=fil.map((c,fi)=>{
+    const realIdx=clientes.indexOf(c);
+    const vcl=vcls[c.vendedor]||'vl';
+    const cumStr=c.fnac?c.fnac.substring(0,5):'—';
+    const fv=parseFecha(c.fecha);
+    let proxStr='—';
+    if(fv){
+      const cands=[];
+      const cp=proxCumple(c.fnac,hoy);if(cp)cands.push({d:diasHasta(cp,hoy),l:'Cumple'});
+      const m6=new Date(fv);m6.setMonth(m6.getMonth()+6);cands.push({d:diasHasta(m6,hoy),l:'6m'});
+      const y1=new Date(fv);y1.setFullYear(y1.getFullYear()+1);cands.push({d:diasHasta(y1,hoy),l:'1a'});
+      const y2=new Date(fv);y2.setFullYear(y2.getFullYear()+2);cands.push({d:diasHasta(y2,hoy),l:'2a'});
+      const p=cands.filter(x=>x.d>=0).sort((a,b)=>a.d-b.d)[0];
+      if(p)proxStr=p.d===0?`Hoy (${p.l})`:p.d<=7?`${p.d}d (${p.l})`:`${fmtFecha(new Date(hoy.getTime()+p.d*86400000)).substring(0,5)} (${p.l})`;
+    }
+    return`<tr>
+      <td>${c.venta}</td>
+      <td>${c.fecha}</td>
+      <td title="${c.cliente}">${c.cliente}</td>
+      <td title="${c.version}">${c.modelo}</td>
+      <td>${c.moneda==='ARS'?'$':'u$s'}${Number(c.precio).toLocaleString('es-AR')}</td>
+      <td><span class="vpill ${vcl}">${c.vendedor.split(' ')[0]}</span></td>
+      <td>${cumStr}</td>
+      <td class="prox-alert">${proxStr}</td>
+      <td><button class="btn btn-sm" onclick="editCliente(${realIdx})">✏</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function render(){
+  document.getElementById('mTotal').textContent=clientes.length;
+  renderAlertas();
+  renderClientes();
+}
+
+function showTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+function openAddModal(){
+  editIdx=-1;
+  document.getElementById('modalTitle').textContent='Agregar cliente';
+  ['mVenta','mFecha','mCliente','mCel','mEmail','mFnac','mModelo','mVersion','mPrecio','mPago','mObs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mMoneda').value='USD';
+  document.getElementById('mVendedor').value='Lautaro Giambrone';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function editCliente(idx){
+  editIdx=idx;
+  const c=clientes[idx];
+  document.getElementById('modalTitle').textContent='Editar cliente';
+  document.getElementById('mVenta').value=c.venta;
+  document.getElementById('mFecha').value=c.fecha;
+  document.getElementById('mCliente').value=c.cliente;
+  document.getElementById('mCel').value=c.cel;
+  document.getElementById('mEmail').value=c.email;
+  document.getElementById('mFnac').value=c.fnac;
+  document.getElementById('mModelo').value=c.modelo;
+  document.getElementById('mVersion').value=c.version;
+  document.getElementById('mPrecio').value=c.precio;
+  document.getElementById('mMoneda').value=c.moneda||'USD';
+  document.getElementById('mVendedor').value=c.vendedor;
+  document.getElementById('mPago').value=c.pago;
+  document.getElementById('mObs').value=c.obs;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+
+function saveCliente(){
+  const obj={
+    venta:document.getElementById('mVenta').value.trim(),
+    fecha:document.getElementById('mFecha').value.trim(),
+    cliente:document.getElementById('mCliente').value.trim(),
+    cel:document.getElementById('mCel').value.trim(),
+    email:document.getElementById('mEmail').value.trim(),
+    fnac:document.getElementById('mFnac').value.trim(),
+    modelo:document.getElementById('mModelo').value.trim(),
+    version:document.getElementById('mVersion').value.trim(),
+    color:'',
+    precio:document.getElementById('mPrecio').value.trim(),
+    moneda:document.getElementById('mMoneda').value,
+    pago:document.getElementById('mPago').value.trim(),
+    vendedor:document.getElementById('mVendedor').value,
+    recCumple:'',recCambio:'',
+    obs:document.getElementById('mObs').value.trim()
+  };
+  if(!obj.cliente){alert('El nombre del cliente es obligatorio.');return;}
+  if(editIdx>=0){clientes[editIdx]=obj;}
+  else{clientes.push(obj);}
+  saveData();render();closeModal();
+}
+
+function saveConfig(){
+  cfg.email=document.getElementById('cfgEmail').value;
+  localStorage.setItem(CFG_KEY,JSON.stringify(cfg));
+  const st=document.getElementById('cfgStatus');
+  st.innerHTML='<div class="status-msg status-ok">Email guardado correctamente.</div>';
+  setTimeout(()=>st.innerHTML='',3000);
+}
+
+function exportCSV(){
+  const headers=['N° Venta','Fecha','Cliente','Celular','Email','Fecha Nac','Modelo','Version','Color','Precio','Moneda','Forma Pago','Vendedor','Rec. Cumpleanos','Rec. Cambio Unidad','Observaciones'];
+  const rows=[headers,...clientes.map(objToRow)];
+  const csv=rows.map(r=>r.map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='colcar_clientes_'+new Date().toISOString().substring(0,10)+'.csv';
+  a.click();
+}
+
+function importCSV(input){
+  const f=input.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    const rows=lines.slice(1).map(l=>{
+      const cols=[];let cur='',inQ=false;
+      for(const ch of l){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur);cur='';}else{cur+=ch;}}
+      cols.push(cur);
+      return cols.map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+    }).filter(r=>r[0]);
+    clientes=rows.map(rowToObj);
+    saveData();render();
+    alert('Importados '+clientes.length+' clientes correctamente.');
+  };
+  reader.readAsText(f,'UTF-8');
+  input.value='';
+}
+
+function confirmClear(){
+  if(confirm('Estas seguro que queres borrar TODOS los datos? Esta accion no se puede deshacer.')){
+    clientes=[];saveData();render();
+  }
+}
+
+function onPDFUpload(files){
+  if(!files||!files.length)return;
+  alert('Para procesar PDFs con IA, copia los archivos y pegalos en el chat de Claude junto con el mensaje: "Agregar estos PDFs al CRM".');
+}
+
+loadData();
+render();
+document.getElementById('syncInfo').textContent='Listo — '+clientes.length+' clientes';
+</script>
+</body>
+</html>
