@@ -95,6 +95,22 @@ tr:hover td{background:#f9fafb;}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
 @media(max-width:600px){.metrics{grid-template-columns:repeat(2,1fr);}.search-row{flex-wrap:wrap;}}
 </style>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+
+<style id="pdf-drop-styles">
+#pdfDragOverlay{display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,173,239,0.18);backdrop-filter:blur(2px);align-items:center;justify-content:center;pointer-events:none;}
+#pdfDragOverlay.show{display:flex;}
+#pdfDragOverlay .drop-box{background:#fff;border:3px dashed #00ADEF;border-radius:20px;padding:48px 72px;text-align:center;box-shadow:0 8px 40px rgba(0,173,239,0.25);pointer-events:none;}
+#pdfDragOverlay .drop-icon{font-size:56px;margin-bottom:12px;}
+#pdfDragOverlay .drop-title{font-size:22px;font-weight:700;color:#00ADEF;margin-bottom:6px;}
+#pdfDragOverlay .drop-sub{font-size:14px;color:#6b7280;}
+.crm-toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:#059669;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:toastUp .3s ease;}
+.crm-toast.error{background:#dc2626;}
+@keyframes toastUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
 </head>
 <body>
 
@@ -539,12 +555,92 @@ function confirmClear(){
 
 function onPDFUpload(files){
   if(!files||!files.length)return;
-  alert('Para procesar PDFs con IA, copia los archivos y pegalos en el chat de Claude junto con el mensaje: "Agregar estos PDFs al CRM".');
+  processPdfAndSave(files[0]);
 }
+async function pdfToText(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  let out='';
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    const byY={};
+    for(const item of tc.items){const y=Math.round(item.transform[5]);if(!byY[y])byY[y]=[];byY[y].push({x:item.transform[4],str:item.str});}
+    const ys=Object.keys(byY).map(Number).sort((a,b)=>b-a);
+    for(const y of ys){const line=byY[y].sort((a,b)=>a.x-b.x).map(i=>i.str).join(' ').trim();if(line)out+=line+'\n';}
+    out+='\n';
+  }
+  return out.trim();
+}
+function parseFromPdfText(txt,fname){
+  const d={venta:'',fecha:'',cliente:'',cel:'',email:'',fnac:'',modelo:'',version:'',color:'',precio:'',moneda:'USD',pago:'Contado',vendedor:'Lautaro Giambrone',recCumple:'',recCambio:'',obs:''};
+  let m;
+  m=txt.match(/(?:venta|operaci[oó]n|contrato|op\.?|nro\.?)\s*[:\-#°]?\s*(\d{4,6})/i);if(m)d.venta=m[1];
+  if(!d.venta){m=fname.match(/(?:^|[_\s\-])(\d{5,6})(?:[_\s\-\.]|$)/);if(m)d.venta=m[1];}
+  if(!d.venta){m=fname.match(/\b(\d{5,6})\b/);if(m)d.venta=m[1];}
+  m=txt.match(/(?:fecha|date)\s*[:\-]?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i);
+  if(!m)m=txt.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m){const raw=(m[1]&&m[2]&&m[3])?(m[1]+'/'+m[2]+'/'+m[3]):(m[1]||m[0]);const parts=raw.replace(/-/g,'/').split('/');if(parts.length===3){if(parts[2].length===2)parts[2]='20'+parts[2];d.fecha=parts[0].padStart(2,'0')+'/'+parts[1].padStart(2,'0')+'/'+parts[2];}}
+  const stopRe=/\b(cel(?:ular)?|tel[eé]f?|email|correo|domicilio|dni|cuit|cuil|modelo|unidad|auto|veh[ií]c|precio|importe|fecha|forma|pago|vendedor|observ)\b/i;
+  m=txt.match(/(?:cliente|comprador|adquirente|titular|denominaci[oó]n)\s*[:\-]?\s*([^\n\r]{3,60})/i);
+  if(m){let n=m[1].trim();const s=n.search(stopRe);if(s>2)n=n.substring(0,s);d.cliente=n.replace(/\s+/g,' ').trim().substring(0,60);}
+  if(!d.cliente){m=txt.match(/\b(?:SR\.|SRA\.|SE[ÑN]OR[A]?\.?)\s+([A-Z\u00C0-\u00FF][A-Za-z\u00C0-\u00FF\s]{2,40})/i);if(m)d.cliente=m[1].trim().substring(0,60);}
+  if(!d.cliente){d.cliente=fname.replace(/\.pdf$/i,'').replace(/\d{4,6}/g,'').replace(/[_\-]/g,' ').trim().replace(/\s+/g,' ');}
+  m=txt.match(/(?:cel(?:ular)?|tel[eé]f?(?:ono)?|m[oó]vil|whatsapp)\s*[:\-]?\s*(\+?[\d][\d\s\-\(\)]{5,16}\d)/i);
+  if(m)d.cel=m[1].replace(/\D/g,'').replace(/^(0054|54)/,'').replace(/^0/,'').substring(0,12);
+  m=txt.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);if(m)d.email=m[0].toLowerCase();
+  m=txt.match(/(?:nac(?:imiento)?|cumplea[\xF1n]os|fecha\s+de\s+nac)\s*[:\-]?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i);
+  if(m){const parts=m[1].replace(/-/g,'/').split('/');if(parts[2]&&parts[2].length===2)parts[2]='19'+parts[2];d.fnac=parts[0].padStart(2,'0')+'/'+parts[1].padStart(2,'0')+'/'+(parts[2]||'');}
+  m=txt.match(/(?:modelo|unidad|veh[ií]c(?:ulo)?|auto(?:m[oó]vil)?|version)\s*[:\-]?\s*((?:GLC|GLA|GLB|GLE|GLS|CLA|CLS|Clase\s+[A-CE-Z]|Sprinter|Vito|Viano|AMG)[^\n\r,]{0,40})/i);
+  if(!m)m=txt.match(/\b((?:GLC|GLA|GLB|GLE|GLS|CLA|CLS|Clase\s+[A-CE-Z]|Sprinter|Vito|Viano)[^\n\r,]{0,40})/i);
+  if(m){const full=m[1].trim().replace(/\s+/g,' ').substring(0,50);const pts=full.split(/\s+/);d.modelo=pts.slice(0,Math.min(3,pts.length)).join(' ');d.version=full;}
+  m=txt.match(/(?:U\$[Ss]|USD|u\$s)\s*([\d\.]{3,12}(?:[,]\d{2})?)/);
+  if(m){d.precio=m[1].replace(/\./g,'').replace(',','');d.moneda='USD';}
+  if(!d.precio){m=txt.match(/(?:precio|importe|monto|total|valor)\s*[:\-]?\s*(?:\$|ARS)?\s*([\d\.,]{4,15})/i);if(m){let ps=m[1];if(/\.\d{3}/.test(ps))ps=ps.replace(/\./g,'');else ps=ps.replace(/,/g,'');d.precio=ps.split('.')[0];d.moneda='ARS';}}
+  if(!d.precio){m=txt.match(/\$\s*([\d\.]{6,15})/);if(m){d.precio=m[1].replace(/\./g,'');d.moneda='ARS';}}
+  if(/U\$[Ss]|USD|u\$s|d[oó]lar/i.test(txt))d.moneda='USD';else if(/\bARS\b|\bpesos?\b/i.test(txt))d.moneda='ARS';
+  if(/cuotas?/i.test(txt))d.pago='Contado + cuotas';else if(/leasing/i.test(txt))d.pago='Leasing';else if(/financiad[oa]/i.test(txt))d.pago='Contado + cuotas';else if(/toma/i.test(txt))d.pago='Contado + Toma';else if(/contado/i.test(txt))d.pago='Contado';else if(/directa/i.test(txt))d.pago='Venta directa';
+  const vmap=[['Lautaro Giambrone','lautaro'],['Gabriela Ventinelli','gabriela'],['Juan I. Castro','juan castro','juan i']];
+  for(const [vName,...keys]of vmap){if(keys.some(k=>txt.toLowerCase().includes(k))){d.vendedor=vName;break;}}
+  return d;
+}
+async function processPdfAndSave(file){
+  const toast=document.createElement('div');
+  toast.className='crm-toast';
+  toast.textContent='\u23F3 Leyendo '+file.name+'\u2026';
+  document.body.appendChild(toast);
+  try{
+    const rawText=await pdfToText(file);
+    const data=parseFromPdfText(rawText,file.name);
+    if(!data.cliente.trim()){toast.className='crm-toast error';toast.textContent='\u274C No se pudo detectar el nombre del cliente';setTimeout(()=>toast.remove(),4000);return;}
+    clientes.push(data);saveData();render();
+    toast.textContent='\u2713 '+data.cliente+' guardado correctamente';
+    setTimeout(()=>toast.remove(),3500);
+  }catch(e){
+    toast.className='crm-toast error';
+    toast.textContent='\u274C Error al leer el PDF: '+e.message;
+    setTimeout(()=>toast.remove(),4000);
+  }
+}
+(function(){
+  let counter=0;
+  document.addEventListener('dragenter',function(e){if(e.dataTransfer&&e.dataTransfer.items&&e.dataTransfer.items.length>0){counter++;document.getElementById('pdfDragOverlay').classList.add('show');}},false);
+  document.addEventListener('dragleave',function(){counter--;if(counter<=0){counter=0;document.getElementById('pdfDragOverlay').classList.remove('show');}},false);
+  document.addEventListener('dragover',function(e){e.preventDefault();},false);
+  document.addEventListener('drop',function(e){e.preventDefault();counter=0;document.getElementById('pdfDragOverlay').classList.remove('show');const files=Array.from(e.dataTransfer.files).filter(f=>f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));if(files.length>0)processPdfAndSave(files[0]);},false);
+})();
 
 loadData();
 render();
 document.getElementById('syncInfo').textContent='Listo — '+clientes.length+' clientes';
 </script>
+
+<div id="pdfDragOverlay">
+  <div class="drop-box">
+    <div class="drop-icon">&#x1F4C4;</div>
+    <div class="drop-title">Soltar el PDF aca</div>
+    <div class="drop-sub">Los datos se cargan automaticamente</div>
+  </div>
+</div>
 </body>
 </html>
