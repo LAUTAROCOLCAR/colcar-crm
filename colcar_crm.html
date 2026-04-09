@@ -555,7 +555,8 @@ function confirmClear(){
 
 function onPDFUpload(files){
   if(!files||!files.length)return;
-  processPdfAndSave(files[0]);
+  const arr=Array.from(files).filter(f=>f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));
+  if(arr.length>0)processPdfsAndSave(arr);
 }
 async function pdfToText(file){
   const buf=await file.arrayBuffer();
@@ -604,30 +605,40 @@ function parseFromPdfText(txt,fname){
   for(const [vName,...keys]of vmap){if(keys.some(k=>txt.toLowerCase().includes(k))){d.vendedor=vName;break;}}
   return d;
 }
-async function processPdfAndSave(file){
+async function processPdfsAndSave(files){
+  const total=files.length;
+  let saved=0;let errors=0;
+  // Show progress toast
   const toast=document.createElement('div');
   toast.className='crm-toast';
-  toast.textContent='\u23F3 Leyendo '+file.name+'\u2026';
+  toast.textContent='\u23F3 Procesando '+total+' PDF'+(total>1?'s':'')+'\u2026';
   document.body.appendChild(toast);
-  try{
-    const rawText=await pdfToText(file);
-    const data=parseFromPdfText(rawText,file.name);
-    if(!data.cliente.trim()){toast.className='crm-toast error';toast.textContent='\u274C No se pudo detectar el nombre del cliente';setTimeout(()=>toast.remove(),4000);return;}
-    clientes.push(data);saveData();render();
-    toast.textContent='\u2713 '+data.cliente+' guardado correctamente';
+  for(const file of files){
+    try{
+      const rawText=await pdfToText(file);
+      const data=parseFromPdfText(rawText,file.name);
+      if(!data.cliente.trim()){errors++;continue;}
+      clientes.push(data);saved++;
+      toast.textContent='\u23F3 '+(saved+errors)+' de '+total+' \u2014 '+data.cliente+'\u2026';
+    }catch(e){errors++;}
+  }
+  saveData();render();
+  if(saved>0){
+    toast.textContent='\u2713 '+saved+' cliente'+(saved>1?'s':'')+' guardado'+(saved>1?'s':'')+' correctamente'+(errors>0?' ('+errors+' error'+(errors>1?'es':'')+')':'');
     setTimeout(()=>toast.remove(),3500);
-  }catch(e){
+  } else {
     toast.className='crm-toast error';
-    toast.textContent='\u274C Error al leer el PDF: '+e.message;
+    toast.textContent='\u274C No se pudo detectar ningún cliente en los PDFs';
     setTimeout(()=>toast.remove(),4000);
   }
 }
+
 (function(){
   let counter=0;
   document.addEventListener('dragenter',function(e){if(e.dataTransfer&&e.dataTransfer.items&&e.dataTransfer.items.length>0){counter++;document.getElementById('pdfDragOverlay').classList.add('show');}},false);
   document.addEventListener('dragleave',function(){counter--;if(counter<=0){counter=0;document.getElementById('pdfDragOverlay').classList.remove('show');}},false);
   document.addEventListener('dragover',function(e){e.preventDefault();},false);
-  document.addEventListener('drop',function(e){e.preventDefault();counter=0;document.getElementById('pdfDragOverlay').classList.remove('show');const files=Array.from(e.dataTransfer.files).filter(f=>f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));if(files.length>0)processPdfAndSave(files[0]);},false);
+  document.addEventListener('drop',function(e){e.preventDefault();counter=0;document.getElementById('pdfDragOverlay').classList.remove('show');const files=Array.from(e.dataTransfer.files).filter(f=>f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));if(files.length>0)processPdfsAndSave(files);},false);
 })();
 
 loadData();
@@ -638,8 +649,8 @@ document.getElementById('syncInfo').textContent='Listo — '+clientes.length+' c
 <div id="pdfDragOverlay">
   <div class="drop-box">
     <div class="drop-icon">&#x1F4C4;</div>
-    <div class="drop-title">Soltar el PDF aca</div>
-    <div class="drop-sub">Los datos se cargan automaticamente</div>
+    <div class="drop-title">Soltar uno o varios PDFs aca</div>
+    <div class="drop-sub">Se guardan automaticamente en el CRM</div>
   </div>
 </div>
 </body>
